@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"id": "blockbets",
+	"version": "${version}",
+	"name": "Block Bets",
+	"description": "Duplicate your ores... with risk!",
+	"authors": [
+		"Shirolicht"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/Kimchu16/Block-Bets"
+	},
+	"license": "MIT",
+	"icon": "assets/blockbets/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.kimchu16.blockbets.BlockBets"
+		],
+		"fabric-datagen": [
+			"com.kimchu16.blockbets.BlockBetsDataGenerator"
+		],
+		"client": [
+			"com.kimchu16.blockbets.BlockBetsClient"
+		]
+	},
+	"mixins": [
+		"blockbets.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
