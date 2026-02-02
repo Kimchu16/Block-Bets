@@ -37,7 +37,7 @@ public class ModBlocks {
         BlockBets.LOGGER.info("Registering Mod Blocks for " + BlockBets.MOD_ID);
 
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.FUNCTIONAL).register(entries -> {
-            entries.add(ModBlocks.SLOT_MACHINE_BLOCK);
+            //entries.add(ModBlocks.SLOT_MACHINE_BLOCK);
         });
     }
 }

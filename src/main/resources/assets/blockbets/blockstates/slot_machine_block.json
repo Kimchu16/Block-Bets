@@ -2,18 +2,18 @@
   "variants": {
     "facing=east": {
       "model": "blockbets:block/slot_machine_block",
-      "y": 90
+      "y": 270
     },
     "facing=north": {
-      "model": "blockbets:block/slot_machine_block"
-    },
-    "facing=south": {
       "model": "blockbets:block/slot_machine_block",
       "y": 180
     },
+    "facing=south": {
+      "model": "blockbets:block/slot_machine_block"
+    },
     "facing=west": {
       "model": "blockbets:block/slot_machine_block",
-      "y": 270
+      "y": 90
     }
   }
 }
