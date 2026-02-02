@@ -1,6 +1,7 @@
 package com.kimchu16.blockbets.block;
 
 import com.kimchu16.blockbets.BlockBets;
+import com.kimchu16.blockbets.block.custom.SlotMachineBlock;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
@@ -14,7 +15,8 @@ import net.minecraft.util.Identifier;
 
 public class ModBlocks {
     public static final Block SLOT_MACHINE_BLOCK = registerBlock("slot_machine_block",
-            new Block(AbstractBlock.Settings.create()
+            new SlotMachineBlock(AbstractBlock.Settings.create()
+                    .nonOpaque()
                     .strength(4.0f, 5.0f)
                     .requiresTool()
                     .sounds(BlockSoundGroup.METAL)
