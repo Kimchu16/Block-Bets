@@ -1,6 +1,7 @@
 package com.kimchu16.blockbets;
 
 import com.kimchu16.blockbets.block.ModBlocks;
+import com.kimchu16.blockbets.item.ModItemGroups;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -12,6 +13,7 @@ public class BlockBets implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
+		ModItemGroups.registerItemGroups();
 		ModBlocks.registerModBlocks();
 	}
 }
