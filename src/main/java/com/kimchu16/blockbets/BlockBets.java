@@ -1,6 +1,7 @@
 package com.kimchu16.blockbets;
 
 import com.kimchu16.blockbets.block.ModBlocks;
+import com.kimchu16.blockbets.block.entity.ModBlockEntities;
 import com.kimchu16.blockbets.item.ModItemGroups;
 import net.fabricmc.api.ModInitializer;
 
@@ -15,5 +16,6 @@ public class BlockBets implements ModInitializer {
 	public void onInitialize() {
 		ModItemGroups.registerItemGroups();
 		ModBlocks.registerModBlocks();
+		ModBlockEntities.registerBlockEntities();
 	}
 }
