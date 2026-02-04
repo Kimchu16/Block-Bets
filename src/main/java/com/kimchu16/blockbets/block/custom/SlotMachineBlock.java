@@ -72,8 +72,10 @@ public class SlotMachineBlock extends BlockWithEntity {
     @Override
     protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
         BlockEntity blockEntity = world.getBlockEntity(pos);
-        if (blockEntity instanceof SlotMachineBlockEntity) {
-
+        if (blockEntity instanceof SlotMachineBlockEntity slotMachineBlockEntity) {
+            if (!world.isClient()){
+                player.openHandledScreen(slotMachineBlockEntity);
+            }
         }
 
         return ActionResult.SUCCESS;

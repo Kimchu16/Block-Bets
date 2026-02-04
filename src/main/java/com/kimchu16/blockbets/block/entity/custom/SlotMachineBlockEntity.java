@@ -2,6 +2,7 @@ package com.kimchu16.blockbets.block.entity.custom;
 
 import com.kimchu16.blockbets.block.entity.ImplementedInventory;
 import com.kimchu16.blockbets.block.entity.ModBlockEntities;
+import com.kimchu16.blockbets.screen.custom.SlotMachineScreenHandler;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -58,7 +59,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
 
     @Override
     public @Nullable ScreenHandler createMenu(int syncId, PlayerInventory playerInventory, PlayerEntity player) {
-        return null;
+        return new SlotMachineScreenHandler(syncId, playerInventory, this.pos);
     }
 
     // These 2 methods are needed in order for the client and server to properly synchronize

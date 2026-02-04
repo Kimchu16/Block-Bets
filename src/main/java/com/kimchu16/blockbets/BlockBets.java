@@ -3,6 +3,7 @@ package com.kimchu16.blockbets;
 import com.kimchu16.blockbets.block.ModBlocks;
 import com.kimchu16.blockbets.block.entity.ModBlockEntities;
 import com.kimchu16.blockbets.item.ModItemGroups;
+import com.kimchu16.blockbets.screen.ModScreenHandlers;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -17,5 +18,6 @@ public class BlockBets implements ModInitializer {
 		ModItemGroups.registerItemGroups();
 		ModBlocks.registerModBlocks();
 		ModBlockEntities.registerBlockEntities();
+		ModScreenHandlers.registerScreenHandlers();
 	}
 }
