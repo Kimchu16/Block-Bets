@@ -42,7 +42,7 @@ public class SlotMachineBlock extends BlockWithEntity {
     // Allows the Front of the slot machine to always face player when placed
     @Override
     public @Nullable BlockState getPlacementState(ItemPlacementContext ctx) {
-        return this.getDefaultState().with(FACING, ctx.getPlayerLookDirection().getOpposite());
+        return this.getDefaultState().with(FACING, ctx.getHorizontalPlayerFacing().getOpposite());
     }
 
     @Override

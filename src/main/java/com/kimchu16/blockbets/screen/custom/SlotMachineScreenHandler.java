@@ -71,4 +71,5 @@ public class SlotMachineScreenHandler extends ScreenHandler {
             this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
         }
     }
+
 }
