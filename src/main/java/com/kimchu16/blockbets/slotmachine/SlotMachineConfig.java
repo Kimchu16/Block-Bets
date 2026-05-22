@@ -87,6 +87,10 @@ public final class SlotMachineConfig {
         return outcomes.get(outcome).weight();
     }
 
+    public BigDecimal getPayoutMultiplier(SlotMachineOutcome outcome) {
+        return outcomes.get(outcome).payoutMultiplier();
+    }
+
     public int getTotalWeight() {
         int totalWeight = 0;
         for (OutcomeSettings settings : outcomes.values()) {

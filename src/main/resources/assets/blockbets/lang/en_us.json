@@ -13,5 +13,11 @@
   "gui.blockbets.slot_machine.outcome.win": "Win",
   "gui.blockbets.slot_machine.spin": "Spin",
 
-  "itemgroup.blockbets.block_bets_items": "Block Bets"
+  "itemgroup.blockbets.block_bets_items": "Block Bets",
+
+  "message.blockbets.slot_machine.invalid_bet": "Insert exactly %s clean %s.",
+  "message.blockbets.slot_machine.outcome": "%s: paid %s %s.",
+
+  "tooltip.blockbets.slot_machine.bet": "Bet: %s x %s, clean stack only",
+  "tooltip.blockbets.slot_machine.outcome": "%s: %s%% odds, %sx payout"
 }

@@ -4,15 +4,22 @@ import com.kimchu16.blockbets.block.entity.ImplementedInventory;
 import com.kimchu16.blockbets.block.entity.ModBlockEntities;
 import com.kimchu16.blockbets.screen.custom.SlotMachineScreenHandler;
 import com.kimchu16.blockbets.slotmachine.SlotMachineBet;
+import com.kimchu16.blockbets.slotmachine.SlotMachineConfig;
 import com.kimchu16.blockbets.slotmachine.SlotMachineOutcome;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.FireworkExplosionComponent;
+import net.minecraft.component.type.FireworksComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.inventory.Inventories;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
@@ -22,6 +29,9 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.ItemScatterer;
@@ -29,6 +39,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.UUID;
 
 public class SlotMachineBlockEntity extends BlockEntity implements ImplementedInventory, ExtendedScreenHandlerFactory<BlockPos> {
@@ -218,6 +229,11 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
             if (!player.isRemoved()) {
                 int payoutCount = outcome.calculatePayout(SlotMachineBet.getBetAmount());
                 giveOrDropPayout(player, SlotMachineBet.createPayoutStack(payoutCount));
+                sendOutcomeMessage(player, outcome, payoutCount);
+                playOutcomeSound(outcome);
+                if (outcome == SlotMachineOutcome.JACKPOT && SlotMachineConfig.get().isJackpotFireworksEnabled()) {
+                    launchJackpotFirework();
+                }
             }
             return outcome;
         } finally {
@@ -235,6 +251,64 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         if (!payoutStack.isEmpty() && world != null) {
             ItemScatterer.spawn(world, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, payoutStack);
         }
+    }
+
+    private void sendOutcomeMessage(PlayerEntity player, SlotMachineOutcome outcome, int payoutCount) {
+        player.sendMessage(Text.translatable(
+                "message.blockbets.slot_machine.outcome",
+                outcome.getDisplayText(),
+                payoutCount,
+                SlotMachineBet.getBetItem().getName()
+        ), false);
+    }
+
+    private void playOutcomeSound(SlotMachineOutcome outcome) {
+        if (world == null) {
+            return;
+        }
+
+        SoundEvent soundEvent = switch (outcome) {
+            case JACKPOT -> SoundEvents.ENTITY_PLAYER_LEVELUP;
+            case WIN -> SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP;
+            case PUSH -> SoundEvents.BLOCK_NOTE_BLOCK_PLING.value();
+            case LOSS -> SoundEvents.BLOCK_NOTE_BLOCK_BASS.value();
+            case BUST -> SoundEvents.ENTITY_VILLAGER_NO;
+        };
+        float pitch = switch (outcome) {
+            case JACKPOT -> 1.2f;
+            case WIN -> 1.0f;
+            case PUSH -> 0.9f;
+            case LOSS -> 0.75f;
+            case BUST -> 0.6f;
+        };
+
+        world.playSound(null, pos, soundEvent, SoundCategory.BLOCKS, 1.0f, pitch);
+    }
+
+    private void launchJackpotFirework() {
+        if (!(world instanceof ServerWorld serverWorld)) {
+            return;
+        }
+
+        ItemStack fireworkStack = new ItemStack(Items.FIREWORK_ROCKET);
+        fireworkStack.set(DataComponentTypes.FIREWORKS, new FireworksComponent(1, List.of(
+                new FireworkExplosionComponent(
+                        FireworkExplosionComponent.Type.LARGE_BALL,
+                        IntList.of(0xFFD700, 0xFFFFFF),
+                        IntList.of(0xFF5555),
+                        true,
+                        true
+                )
+        )));
+
+        FireworkRocketEntity firework = new FireworkRocketEntity(
+                serverWorld,
+                pos.getX() + 0.5,
+                pos.getY() + 1.0,
+                pos.getZ() + 0.5,
+                fireworkStack
+        );
+        serverWorld.spawnEntity(firework);
     }
 
     @Override
@@ -258,7 +332,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
 
     @Override
     public Text getDisplayName() {
-        return Text.literal("Slot Machine");
+        return Text.translatable("block.blockbets.slot_machine_block");
     }
 
     @Override

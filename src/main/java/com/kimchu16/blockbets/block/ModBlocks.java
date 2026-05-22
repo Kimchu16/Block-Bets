@@ -2,10 +2,10 @@ package com.kimchu16.blockbets.block;
 
 import com.kimchu16.blockbets.BlockBets;
 import com.kimchu16.blockbets.block.custom.SlotMachineBlock;
+import com.kimchu16.blockbets.item.custom.SlotMachineBlockItem;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.Registries;
@@ -30,7 +30,7 @@ public class ModBlocks {
 
     private static void registerBlockItem(String name, Block block) {
         Registry.register(Registries.ITEM, Identifier.of(BlockBets.MOD_ID, name),
-                new BlockItem(block, new Item.Settings()));
+                new SlotMachineBlockItem(block, new Item.Settings()));
     }
 
     public static void registerModBlocks() {

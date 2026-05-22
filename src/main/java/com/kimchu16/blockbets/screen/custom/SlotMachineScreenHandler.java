@@ -12,6 +12,7 @@ import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 public class SlotMachineScreenHandler extends ScreenHandler {
@@ -74,7 +75,19 @@ public class SlotMachineScreenHandler extends ScreenHandler {
     @Override
     public boolean onButtonClick(PlayerEntity player, int id) {
         if (id == SPIN_BUTTON_ID) {
-            return !player.getWorld().isClient() && this.blockEntity.spin(player) != null;
+            if (player.getWorld().isClient()) {
+                return false;
+            }
+
+            boolean spun = this.blockEntity.spin(player) != null;
+            if (!spun) {
+                player.sendMessage(Text.translatable(
+                        "message.blockbets.slot_machine.invalid_bet",
+                        SlotMachineBet.getBetAmount(),
+                        SlotMachineBet.getBetItem().getName()
+                ), true);
+            }
+            return spun;
         }
 
         return false;
