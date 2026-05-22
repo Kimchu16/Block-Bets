@@ -1,27 +1,29 @@
 package com.kimchu16.blockbets.slotmachine;
 
+import java.math.BigDecimal;
+
 import net.minecraft.text.Text;
 import net.minecraft.util.math.random.Random;
 
 public enum SlotMachineOutcome {
-    JACKPOT(0, "jackpot", 5, 200),
-    WIN(1, "win", 20, 140),
-    PUSH(2, "push", 25, 100),
-    LOSS(3, "loss", 30, 40),
-    BUST(4, "bust", 20, 0);
+    JACKPOT(0, "jackpot", 5, "2.0"),
+    WIN(1, "win", 20, "1.4"),
+    PUSH(2, "push", 25, "1.0"),
+    LOSS(3, "loss", 30, "0.4"),
+    BUST(4, "bust", 20, "0");
 
     public static final int NO_OUTCOME_ID = -1;
 
     private final int id;
     private final String name;
-    private final int weight;
-    private final int payoutPercent;
+    private final int defaultWeight;
+    private final BigDecimal defaultPayoutMultiplier;
 
-    SlotMachineOutcome(int id, String name, int weight, int payoutPercent) {
+    SlotMachineOutcome(int id, String name, int defaultWeight, String defaultPayoutMultiplier) {
         this.id = id;
         this.name = name;
-        this.weight = weight;
-        this.payoutPercent = payoutPercent;
+        this.defaultWeight = defaultWeight;
+        this.defaultPayoutMultiplier = new BigDecimal(defaultPayoutMultiplier);
     }
 
     public int getId() {
@@ -32,17 +34,16 @@ public enum SlotMachineOutcome {
         return name;
     }
 
-    public int getWeight() {
-        return weight;
+    public int getDefaultWeight() {
+        return defaultWeight;
     }
 
-    public int getPayoutPercent() {
-        return payoutPercent;
+    public BigDecimal getDefaultPayoutMultiplier() {
+        return defaultPayoutMultiplier;
     }
 
     public int calculatePayout(int betAmount) {
-        long payout = (long) betAmount * payoutPercent / 100L;
-        return (int) Math.max(0L, Math.min(Integer.MAX_VALUE, payout));
+        return SlotMachineConfig.get().calculatePayout(this, betAmount);
     }
 
     public Text getDisplayText() {
@@ -50,11 +51,12 @@ public enum SlotMachineOutcome {
     }
 
     public static SlotMachineOutcome roll(Random random) {
-        int roll = random.nextInt(100);
+        SlotMachineConfig config = SlotMachineConfig.get();
+        int roll = random.nextInt(config.getTotalWeight());
         int cumulativeWeight = 0;
 
         for (SlotMachineOutcome outcome : values()) {
-            cumulativeWeight += outcome.weight;
+            cumulativeWeight += config.getWeight(outcome);
             if (roll < cumulativeWeight) {
                 return outcome;
             }
