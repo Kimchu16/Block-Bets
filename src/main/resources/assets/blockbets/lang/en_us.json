@@ -5,6 +5,11 @@
   "gui.blockbets.slot_machine.close": "Close",
   "gui.blockbets.slot_machine.output": "Output",
   "gui.blockbets.slot_machine.output_placeholder": "Waiting",
+  "gui.blockbets.slot_machine.outcome.bust": "Bust",
+  "gui.blockbets.slot_machine.outcome.jackpot": "Jackpot",
+  "gui.blockbets.slot_machine.outcome.loss": "Loss",
+  "gui.blockbets.slot_machine.outcome.push": "Push",
+  "gui.blockbets.slot_machine.outcome.win": "Win",
   "gui.blockbets.slot_machine.spin": "Spin",
 
   "itemgroup.blockbets.block_bets_items": "Block Bets"

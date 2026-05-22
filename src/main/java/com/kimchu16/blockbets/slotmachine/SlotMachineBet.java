@@ -25,4 +25,11 @@ public final class SlotMachineBet {
                 && stack.getCount() == DEFAULT_BET_AMOUNT
                 && stack.getComponentChanges().isEmpty();
     }
+
+    public static ItemStack createPayoutStack(int count) {
+        if (count <= 0) {
+            return ItemStack.EMPTY;
+        }
+        return new ItemStack(DEFAULT_BET_ITEM, count);
+    }
 }

@@ -1,6 +1,7 @@
 package com.kimchu16.blockbets.screen.custom;
 
 import com.kimchu16.blockbets.BlockBets;
+import com.kimchu16.blockbets.slotmachine.SlotMachineOutcome;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
@@ -47,7 +48,7 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
         context.drawText(this.textRenderer, this.title, 8, 6, 0x404040, false);
         context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.bet_input"), 24, 22, 0x404040, false);
         context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.output"), 86, 22, 0x404040, false);
-        context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.output_placeholder"), 86, 34, 0x606060, false);
+        context.drawText(this.textRenderer, SlotMachineOutcome.getDisplayText(this.handler.getLastOutcomeId()), 86, 34, 0x606060, false);
     }
 
     @Override

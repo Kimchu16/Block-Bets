@@ -8,6 +8,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
@@ -18,6 +19,7 @@ public class SlotMachineScreenHandler extends ScreenHandler {
 
     private final Inventory inventory;
     private final SlotMachineBlockEntity blockEntity;
+    private final PropertyDelegate propertyDelegate;
 
     public SlotMachineScreenHandler(int syncId, PlayerInventory playerInventory, BlockPos pos) {
         this(syncId, playerInventory, playerInventory.player.getWorld().getBlockEntity(pos));
@@ -31,6 +33,8 @@ public class SlotMachineScreenHandler extends ScreenHandler {
 
         this.inventory = slotMachineBlockEntity;
         this.blockEntity = slotMachineBlockEntity;
+        this.propertyDelegate = slotMachineBlockEntity.getPropertyDelegate();
+        addProperties(this.propertyDelegate);
 
         this.addSlot(new BetInputSlot(inventory, SlotMachineBlockEntity.INPUT_SLOT, 26, 34));
 
@@ -70,7 +74,7 @@ public class SlotMachineScreenHandler extends ScreenHandler {
     @Override
     public boolean onButtonClick(PlayerEntity player, int id) {
         if (id == SPIN_BUTTON_ID) {
-            return !player.getWorld().isClient() && this.blockEntity.tryConsumeBet(player);
+            return !player.getWorld().isClient() && this.blockEntity.spin(player) != null;
         }
 
         return false;
@@ -95,6 +99,10 @@ public class SlotMachineScreenHandler extends ScreenHandler {
         for (int i = 0; i < 9; ++i) {
             this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
         }
+    }
+
+    public int getLastOutcomeId() {
+        return propertyDelegate.get(0);
     }
 
     private static class BetInputSlot extends Slot {
