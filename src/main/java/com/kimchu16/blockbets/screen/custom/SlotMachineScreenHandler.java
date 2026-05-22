@@ -83,8 +83,8 @@ public class SlotMachineScreenHandler extends ScreenHandler {
             if (!spun) {
                 player.sendMessage(Text.translatable(
                         "message.blockbets.slot_machine.invalid_bet",
-                        SlotMachineBet.getBetAmount(),
-                        SlotMachineBet.getBetItem().getName()
+                        SlotMachineBet.getMinimumBetAmount(),
+                        SlotMachineBet.getAcceptedBetItemsText()
                 ), true);
             }
             return spun;
@@ -128,7 +128,18 @@ public class SlotMachineScreenHandler extends ScreenHandler {
 
         @Override
         public boolean canInsert(ItemStack stack) {
-            return !blockEntity.isRolling() && SlotMachineBet.isExactBet(stack);
+            return !blockEntity.isRolling() && SlotMachineBet.isValidBet(stack);
+        }
+
+        @Override
+        public ItemStack insertStack(ItemStack stack, int count) {
+            int insertedCount = Math.min(stack.getCount(), count);
+            if (!hasStack()
+                    && insertedCount < SlotMachineBet.getMinimumBetAmount()
+                    && SlotMachineBet.isCleanAllowedBetItem(stack)) {
+                return stack;
+            }
+            return super.insertStack(stack, count);
         }
 
         @Override
@@ -138,12 +149,12 @@ public class SlotMachineScreenHandler extends ScreenHandler {
 
         @Override
         public int getMaxItemCount() {
-            return SlotMachineBet.getBetAmount();
+            return super.getMaxItemCount();
         }
 
         @Override
         public int getMaxItemCount(ItemStack stack) {
-            return SlotMachineBet.getBetAmount();
+            return stack.getMaxCount();
         }
     }
 }

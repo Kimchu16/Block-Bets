@@ -25,8 +25,8 @@ public class SlotMachineBlockItem extends BlockItem {
 
         tooltip.add(Text.translatable(
                 "tooltip.blockbets.slot_machine.bet",
-                SlotMachineBet.getBetAmount(),
-                SlotMachineBet.getBetItem().getName()
+                SlotMachineBet.getMinimumBetAmount(),
+                SlotMachineBet.getAcceptedBetItemsText()
         ).formatted(Formatting.GRAY));
 
         for (SlotMachineOutcome outcome : SlotMachineOutcome.values()) {

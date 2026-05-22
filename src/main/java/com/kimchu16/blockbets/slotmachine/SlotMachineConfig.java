@@ -3,6 +3,7 @@ package com.kimchu16.blockbets.slotmachine;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.kimchu16.blockbets.BlockBets;
@@ -19,31 +20,38 @@ import java.math.RoundingMode;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Map;
 
 public final class SlotMachineConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String CONFIG_FILE_NAME = "blockbets-slot-machine.json";
-    private static final String DEFAULT_BET_ITEM_ID = "minecraft:diamond";
+    private static final List<String> DEFAULT_BET_ITEM_IDS = List.of(
+            "minecraft:diamond",
+            "minecraft:gold_ingot",
+            "minecraft:iron_ingot",
+            "minecraft:emerald"
+    );
     private static SlotMachineConfig instance = createDefault();
 
-    private final Item betItem;
-    private final Identifier betItemId;
-    private final int betAmount;
+    private final List<Item> betItems;
+    private final List<Identifier> betItemIds;
+    private final int minimumBetAmount;
     private final EnumMap<SlotMachineOutcome, OutcomeSettings> outcomes;
     private final boolean jackpotFireworks;
 
     private SlotMachineConfig(
-            Item betItem,
-            Identifier betItemId,
-            int betAmount,
+            List<Item> betItems,
+            List<Identifier> betItemIds,
+            int minimumBetAmount,
             EnumMap<SlotMachineOutcome, OutcomeSettings> outcomes,
             boolean jackpotFireworks
     ) {
-        this.betItem = betItem;
-        this.betItemId = betItemId;
-        this.betAmount = betAmount;
+        this.betItems = List.copyOf(betItems);
+        this.betItemIds = List.copyOf(betItemIds);
+        this.minimumBetAmount = minimumBetAmount;
         this.outcomes = outcomes;
         this.jackpotFireworks = jackpotFireworks;
     }
@@ -71,16 +79,20 @@ public final class SlotMachineConfig {
         return instance;
     }
 
-    public Item getBetItem() {
-        return betItem;
+    public List<Item> getBetItems() {
+        return betItems;
     }
 
-    public Identifier getBetItemId() {
-        return betItemId;
+    public List<Identifier> getBetItemIds() {
+        return betItemIds;
     }
 
-    public int getBetAmount() {
-        return betAmount;
+    public int getMinimumBetAmount() {
+        return minimumBetAmount;
+    }
+
+    public boolean isAllowedBetItem(Item item) {
+        return betItems.contains(item);
     }
 
     public int getWeight(SlotMachineOutcome outcome) {
@@ -115,23 +127,37 @@ public final class SlotMachineConfig {
     private static SlotMachineConfig parse(JsonObject root) {
         boolean valid = true;
 
-        String betItemRaw = getString(root, "betItem", DEFAULT_BET_ITEM_ID);
-        Identifier betItemId = Identifier.tryParse(betItemRaw);
-        Item betItem = null;
-        if (betItemId == null || !Registries.ITEM.containsId(betItemId)) {
-            BlockBets.LOGGER.warn("Invalid slot machine bet item '{}'; using default config.", betItemRaw);
-            valid = false;
-        } else {
-            betItem = Registries.ITEM.get(betItemId);
+        List<Identifier> betItemIds = new ArrayList<>();
+        List<Item> betItems = new ArrayList<>();
+        for (String rawBetItemId : getBetItemStrings(root)) {
+            Identifier betItemId = Identifier.tryParse(rawBetItemId);
+            if (betItemId == null || !Registries.ITEM.containsId(betItemId)) {
+                BlockBets.LOGGER.warn("Invalid slot machine bet item '{}'; using default config.", rawBetItemId);
+                valid = false;
+                continue;
+            }
+
+            Item betItem = Registries.ITEM.get(betItemId);
             if (betItem == Items.AIR) {
                 BlockBets.LOGGER.warn("Slot machine bet item cannot be air; using default config.");
                 valid = false;
+                continue;
+            }
+
+            if (!betItems.contains(betItem)) {
+                betItemIds.add(betItemId);
+                betItems.add(betItem);
             }
         }
 
-        int betAmount = getInt(root, "betAmount", 5);
-        if (betAmount <= 0) {
-            BlockBets.LOGGER.warn("Slot machine bet amount must be positive; using default config.");
+        if (betItems.isEmpty()) {
+            BlockBets.LOGGER.warn("Slot machine must have at least one valid bet item; using default config.");
+            valid = false;
+        }
+
+        int minimumBetAmount = getInt(root, "minimumBetAmount", getInt(root, "betAmount", 5));
+        if (minimumBetAmount <= 0) {
+            BlockBets.LOGGER.warn("Slot machine minimum bet amount must be positive; using default config.");
             valid = false;
         }
 
@@ -164,11 +190,11 @@ public final class SlotMachineConfig {
             valid = false;
         }
 
-        if (!valid || betItem == null || betItemId == null) {
+        if (!valid) {
             return createDefault();
         }
 
-        return new SlotMachineConfig(betItem, betItemId, betAmount, outcomes, jackpotFireworks);
+        return new SlotMachineConfig(betItems, betItemIds, minimumBetAmount, outcomes, jackpotFireworks);
     }
 
     private static SlotMachineConfig createDefault() {
@@ -177,7 +203,15 @@ public final class SlotMachineConfig {
             outcomes.put(outcome, new OutcomeSettings(outcome.getDefaultWeight(), outcome.getDefaultPayoutMultiplier()));
         }
 
-        return new SlotMachineConfig(Items.DIAMOND, Identifier.of("minecraft", "diamond"), 5, outcomes, true);
+        List<Identifier> betItemIds = new ArrayList<>();
+        List<Item> betItems = new ArrayList<>();
+        for (String rawBetItemId : DEFAULT_BET_ITEM_IDS) {
+            Identifier betItemId = Identifier.of(rawBetItemId);
+            betItemIds.add(betItemId);
+            betItems.add(Registries.ITEM.get(betItemId));
+        }
+
+        return new SlotMachineConfig(betItems, betItemIds, 5, outcomes, true);
     }
 
     private static void writeDefaultConfig(Path configPath) throws IOException {
@@ -187,8 +221,12 @@ public final class SlotMachineConfig {
 
     private static JsonObject toJson(SlotMachineConfig config) {
         JsonObject root = new JsonObject();
-        root.addProperty("betItem", config.betItemId.toString());
-        root.addProperty("betAmount", config.betAmount);
+        JsonArray betItems = new JsonArray();
+        for (Identifier betItemId : config.betItemIds) {
+            betItems.add(betItemId.toString());
+        }
+        root.add("betItems", betItems);
+        root.addProperty("minimumBetAmount", config.minimumBetAmount);
         root.addProperty("jackpotFireworks", config.jackpotFireworks);
 
         JsonObject outcomes = new JsonObject();
@@ -201,6 +239,19 @@ public final class SlotMachineConfig {
         root.add("outcomes", outcomes);
 
         return root;
+    }
+
+    private static List<String> getBetItemStrings(JsonObject root) {
+        JsonArray betItems = getArray(root, "betItems");
+        if (betItems == null) {
+            return DEFAULT_BET_ITEM_IDS;
+        }
+
+        List<String> result = new ArrayList<>();
+        for (JsonElement element : betItems) {
+            result.add(element.getAsString());
+        }
+        return result;
     }
 
     private static String getString(JsonObject object, String key, String fallback) {
@@ -242,6 +293,19 @@ public final class SlotMachineConfig {
         }
 
         return element.getAsJsonObject();
+    }
+
+    private static JsonArray getArray(JsonObject object, String key) {
+        if (object == null || !object.has(key)) {
+            return null;
+        }
+
+        JsonElement element = object.get(key);
+        if (!element.isJsonArray()) {
+            return null;
+        }
+
+        return element.getAsJsonArray();
     }
 
     private record OutcomeSettings(int weight, BigDecimal payoutMultiplier) {

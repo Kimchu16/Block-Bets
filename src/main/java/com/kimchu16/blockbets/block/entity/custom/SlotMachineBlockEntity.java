@@ -18,6 +18,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.entity.projectile.FireworkRocketEntity;
 import net.minecraft.inventory.Inventories;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.NbtCompound;
@@ -213,7 +214,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         }
 
         ItemStack betStack = getStack(INPUT_SLOT);
-        if (!SlotMachineBet.isExactBet(betStack)) {
+        if (!SlotMachineBet.isValidBet(betStack)) {
             return null;
         }
 
@@ -222,14 +223,16 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         }
 
         try {
-            removeStack(INPUT_SLOT, SlotMachineBet.getBetAmount());
+            Item betItem = betStack.getItem();
+            int betAmount = betStack.getCount();
+            removeStack(INPUT_SLOT);
 
             SlotMachineOutcome outcome = SlotMachineOutcome.roll(world.getRandom());
             lastOutcomeId = outcome.getId();
             if (!player.isRemoved()) {
-                int payoutCount = outcome.calculatePayout(SlotMachineBet.getBetAmount());
-                giveOrDropPayout(player, SlotMachineBet.createPayoutStack(payoutCount));
-                sendOutcomeMessage(player, outcome, payoutCount);
+                int payoutCount = outcome.calculatePayout(betAmount);
+                giveOrDropPayout(player, SlotMachineBet.createPayoutStack(betItem, payoutCount));
+                sendOutcomeMessage(player, outcome, payoutCount, betItem);
                 playOutcomeSound(outcome);
                 if (outcome == SlotMachineOutcome.JACKPOT && SlotMachineConfig.get().isJackpotFireworksEnabled()) {
                     launchJackpotFirework();
@@ -253,12 +256,12 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         }
     }
 
-    private void sendOutcomeMessage(PlayerEntity player, SlotMachineOutcome outcome, int payoutCount) {
+    private void sendOutcomeMessage(PlayerEntity player, SlotMachineOutcome outcome, int payoutCount, Item betItem) {
         player.sendMessage(Text.translatable(
                 "message.blockbets.slot_machine.outcome",
                 outcome.getDisplayText(),
                 payoutCount,
-                SlotMachineBet.getBetItem().getName()
+                betItem.getName()
         ), false);
     }
 

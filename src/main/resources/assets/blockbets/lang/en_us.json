@@ -15,9 +15,9 @@
 
   "itemgroup.blockbets.block_bets_items": "Block Bets",
 
-  "message.blockbets.slot_machine.invalid_bet": "Insert exactly %s clean %s.",
+  "message.blockbets.slot_machine.invalid_bet": "Insert at least %s clean items: %s.",
   "message.blockbets.slot_machine.outcome": "%s: paid %s %s.",
 
-  "tooltip.blockbets.slot_machine.bet": "Bet: %s x %s, clean stack only",
+  "tooltip.blockbets.slot_machine.bet": "Minimum bet: %s clean items of %s",
   "tooltip.blockbets.slot_machine.outcome": "%s: %s%% odds, %sx payout"
 }
