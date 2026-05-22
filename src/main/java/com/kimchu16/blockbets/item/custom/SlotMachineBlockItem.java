@@ -4,6 +4,7 @@ import com.kimchu16.blockbets.slotmachine.SlotMachineBet;
 import com.kimchu16.blockbets.slotmachine.SlotMachineConfig;
 import com.kimchu16.blockbets.slotmachine.SlotMachineOutcome;
 import net.minecraft.block.Block;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -21,8 +22,14 @@ public class SlotMachineBlockItem extends BlockItem {
     @Override
     public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType type) {
         super.appendTooltip(stack, context, tooltip, type);
-        SlotMachineConfig config = SlotMachineConfig.get();
+        tooltip.add(Text.translatable("tooltip.blockbets.slot_machine.description").formatted(Formatting.GRAY));
 
+        if (!Screen.hasShiftDown()) {
+            tooltip.add(Text.translatable("tooltip.blockbets.slot_machine.hold_shift").formatted(Formatting.YELLOW));
+            return;
+        }
+
+        SlotMachineConfig config = SlotMachineConfig.get();
         tooltip.add(Text.translatable(
                 "tooltip.blockbets.slot_machine.bet",
                 SlotMachineBet.getMinimumBetAmount(),
