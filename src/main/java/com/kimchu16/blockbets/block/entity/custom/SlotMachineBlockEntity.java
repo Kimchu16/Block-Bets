@@ -58,6 +58,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
     private static final String PENDING_BET_AMOUNT_KEY = "PendingBetAmount";
     private static final int MIN_ROLL_DELAY_TICKS = 60;
     private static final int MAX_ROLL_DELAY_TICKS = 100;
+    private static final int ROLL_SOUND_INTERVAL_TICKS = 5;
 
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(INVENTORY_SIZE, ItemStack.EMPTY);
     private final PropertyDelegate propertyDelegate = new PropertyDelegate() {
@@ -159,6 +160,8 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         blockEntity.rollTicksRemaining--;
         if (blockEntity.rollTicksRemaining <= 0) {
             blockEntity.resolveRoll();
+        } else if (blockEntity.rollTicksRemaining % ROLL_SOUND_INTERVAL_TICKS == 0) {
+            blockEntity.playRollingSound();
         }
     }
 
@@ -242,6 +245,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         rolling = true;
         lastOutcomeId = SlotMachineOutcome.NO_OUTCOME_ID;
         removeStack(INPUT_SLOT);
+        playRollingSound();
         markDirty();
         return true;
     }
@@ -343,6 +347,16 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         };
 
         world.playSound(null, pos, soundEvent, SoundCategory.BLOCKS, 1.0f, pitch);
+    }
+
+    private void playRollingSound() {
+        if (world == null) {
+            return;
+        }
+
+        int elapsedTicks = MAX_ROLL_DELAY_TICKS - Math.min(rollTicksRemaining, MAX_ROLL_DELAY_TICKS);
+        float pitch = 0.75f + Math.min(elapsedTicks * 0.01f, 0.45f);
+        world.playSound(null, pos, SoundEvents.BLOCK_NOTE_BLOCK_HAT.value(), SoundCategory.BLOCKS, 0.45f, pitch);
     }
 
     private void launchJackpotFirework() {
