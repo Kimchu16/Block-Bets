@@ -191,8 +191,6 @@ public class SlotMachineBlock extends BlockWithEntity {
 
         if (half == DoubleBlockHalf.UPPER) {
             world.breakBlock(otherPos, !player.isCreative() && player.canHarvest(otherState), player);
-        } else {
-            world.setBlockState(otherPos, Blocks.AIR.getDefaultState(), Block.NOTIFY_ALL | Block.SKIP_DROPS);
         }
     }
 }
