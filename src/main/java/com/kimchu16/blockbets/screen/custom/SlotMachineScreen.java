@@ -71,9 +71,13 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     private static final int COLOR_ERROR_TEXT = 0xFFFF7777;
     private static final int PLAYER_SLOT_ROWS = 3;
     private static final int PLAYER_SLOT_COLUMNS = 9;
+    private static final long ROLLING_OUTCOME_FRAME_MILLIS = 120L;
+    private static final SlotMachineOutcome[] ROLLING_DISPLAY_OUTCOMES = SlotMachineOutcome.values();
 
     private boolean invalidBetShown;
+    private boolean observedRolling;
     private int observedOutcomeId = SlotMachineOutcome.NO_OUTCOME_ID;
+    private ThemedButtonWidget spinButton;
 
     public SlotMachineScreen(SlotMachineScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
@@ -87,13 +91,17 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     protected void init() {
         super.init();
 
-        ThemedButtonWidget spinButton = new ThemedButtonWidget(
+        spinButton = new ThemedButtonWidget(
                 this.x + SPIN_BUTTON_X,
                 this.y + SPIN_BUTTON_Y,
                 SPIN_BUTTON_WIDTH,
                 BUTTON_HEIGHT,
                 Text.translatable("gui.blockbets.slot_machine.spin"),
                 () -> {
+                    if (this.handler.isRolling()) {
+                        return;
+                    }
+
                     ItemStack betStack = this.handler.getSlot(SlotMachineScreenHandler.BET_SLOT_ID).getStack();
                     this.invalidBetShown = !SlotMachineBet.isValidBet(betStack);
                     if (this.client != null && this.client.interactionManager != null) {
@@ -118,6 +126,7 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         updateResultState();
+        spinButton.active = !this.handler.isRolling();
         super.render(context, mouseX, mouseY, delta);
         drawMouseoverTooltip(context, mouseX, mouseY);
         drawGuiTooltips(context, mouseX, mouseY);
@@ -253,13 +262,21 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
 
     private void updateResultState() {
         int currentOutcomeId = this.handler.getLastOutcomeId();
-        if (currentOutcomeId != observedOutcomeId) {
+        boolean currentRolling = this.handler.isRolling();
+        if (currentOutcomeId != observedOutcomeId || currentRolling != observedRolling) {
             observedOutcomeId = currentOutcomeId;
-            invalidBetShown = false;
+            observedRolling = currentRolling;
+            if (currentRolling || currentOutcomeId != SlotMachineOutcome.NO_OUTCOME_ID) {
+                invalidBetShown = false;
+            }
         }
     }
 
     private Text getResultText() {
+        if (this.handler.isRolling()) {
+            return getRollingOutcomeText();
+        }
+
         if (invalidBetShown) {
             return Text.translatable("gui.blockbets.slot_machine.result.invalid");
         }
@@ -272,6 +289,10 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     }
 
     private Text getPayoutText() {
+        if (this.handler.isRolling()) {
+            return Text.translatable("gui.blockbets.slot_machine.result.rolling");
+        }
+
         if (invalidBetShown) {
             return Text.translatable("gui.blockbets.slot_machine.result.payout_zero");
         }
@@ -283,6 +304,12 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
 
         return Text.translatable("gui.blockbets.slot_machine.result.payout_multiplier",
                 SlotMachineConfig.get().getPayoutMultiplier(outcome).stripTrailingZeros().toPlainString());
+    }
+
+    private Text getRollingOutcomeText() {
+        int outcomeIndex = (int) ((System.currentTimeMillis() / ROLLING_OUTCOME_FRAME_MILLIS) % ROLLING_DISPLAY_OUTCOMES.length);
+        SlotMachineOutcome outcome = ROLLING_DISPLAY_OUTCOMES[outcomeIndex];
+        return Text.translatable("gui.blockbets.slot_machine.result." + outcome.getName());
     }
 
     private List<Text> getBetTooltip() {

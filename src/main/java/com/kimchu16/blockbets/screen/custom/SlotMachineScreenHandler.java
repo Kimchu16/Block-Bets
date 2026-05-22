@@ -85,7 +85,7 @@ public class SlotMachineScreenHandler extends ScreenHandler {
                 return false;
             }
 
-            return this.blockEntity.spin(player) != null;
+            return this.blockEntity.spin(player);
         }
 
         return false;
@@ -124,6 +124,10 @@ public class SlotMachineScreenHandler extends ScreenHandler {
 
     public int getLastOutcomeId() {
         return propertyDelegate.get(0);
+    }
+
+    public boolean isRolling() {
+        return propertyDelegate.get(1) != 0;
     }
 
     private static class BetInputSlot extends Slot {

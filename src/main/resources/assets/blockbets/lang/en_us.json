@@ -21,6 +21,7 @@
   "gui.blockbets.slot_machine.result.payout_zero": "Payout: 0",
   "gui.blockbets.slot_machine.result.push": "Push",
   "gui.blockbets.slot_machine.result.ready": "Ready",
+  "gui.blockbets.slot_machine.result.rolling": "Rolling...",
   "gui.blockbets.slot_machine.result.win": "Win",
   "gui.blockbets.slot_machine.spin": "Spin",
   "gui.blockbets.slot_machine.subtitle": "Clean Item Bets",

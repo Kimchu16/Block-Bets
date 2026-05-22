@@ -1,9 +1,12 @@
 package com.kimchu16.blockbets.block.custom;
 
 import com.kimchu16.blockbets.block.entity.custom.SlotMachineBlockEntity;
+import com.kimchu16.blockbets.block.entity.ModBlockEntities;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
@@ -52,6 +55,11 @@ public class SlotMachineBlock extends BlockWithEntity {
     public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
 
         return new SlotMachineBlockEntity(pos, state);
+    }
+
+    @Override
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
+        return world.isClient() ? null : validateTicker(type, ModBlockEntities.SLOT_MACHINE_BE, SlotMachineBlockEntity::tick);
     }
 
     // If method override missing the model will appear invisible

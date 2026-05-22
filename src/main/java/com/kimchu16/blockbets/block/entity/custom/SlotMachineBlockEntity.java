@@ -25,6 +25,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
+import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.PropertyDelegate;
@@ -36,8 +37,10 @@ import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.ItemScatterer;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -48,30 +51,49 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
     public static final int INVENTORY_SIZE = 1;
     private static final int[] NO_AUTOMATION_SLOTS = new int[0];
     private static final String LAST_OUTCOME_KEY = "LastOutcome";
+    private static final String ROLLING_KEY = "Rolling";
+    private static final String ROLL_TICKS_REMAINING_KEY = "RollTicksRemaining";
+    private static final String ROLLING_PLAYER_KEY = "RollingPlayer";
+    private static final String PENDING_BET_ITEM_KEY = "PendingBetItem";
+    private static final String PENDING_BET_AMOUNT_KEY = "PendingBetAmount";
+    private static final int MIN_ROLL_DELAY_TICKS = 60;
+    private static final int MAX_ROLL_DELAY_TICKS = 100;
 
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(INVENTORY_SIZE, ItemStack.EMPTY);
     private final PropertyDelegate propertyDelegate = new PropertyDelegate() {
         @Override
         public int get(int index) {
-            return index == 0 ? lastOutcomeId : 0;
+            return switch (index) {
+                case 0 -> lastOutcomeId;
+                case 1 -> rolling ? 1 : 0;
+                default -> 0;
+            };
         }
 
         @Override
         public void set(int index, int value) {
             if (index == 0) {
                 lastOutcomeId = value;
+            } else if (index == 1) {
+                rolling = value != 0;
             }
         }
 
         @Override
         public int size() {
-            return 1;
+            return 2;
         }
     };
     @Nullable
     private UUID activeUser;
     private boolean rolling;
+    private int rollTicksRemaining;
     private int lastOutcomeId = SlotMachineOutcome.NO_OUTCOME_ID;
+    @Nullable
+    private UUID rollingPlayerUuid;
+    @Nullable
+    private Item pendingBetItem;
+    private int pendingBetAmount;
 
     public SlotMachineBlockEntity(BlockPos pos, BlockState state) {
         super(ModBlockEntities.SLOT_MACHINE_BE, pos, state);
@@ -99,11 +121,11 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
     }
 
     private void clearStaleActiveUser() {
-        if (activeUser != null
+        if (!rolling
+                && activeUser != null
                 && world instanceof ServerWorld serverWorld
                 && serverWorld.getServer().getPlayerManager().getPlayer(activeUser) == null) {
             activeUser = null;
-            rolling = false;
             markDirty();
         }
     }
@@ -113,7 +135,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
     }
 
     public void releaseUser(PlayerEntity player) {
-        if (isActiveUser(player)) {
+        if (!rolling && isActiveUser(player)) {
             activeUser = null;
             markDirty();
         }
@@ -121,27 +143,23 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
 
     public void clearActiveUser() {
         activeUser = null;
-        rolling = false;
-        markDirty();
-    }
-
-    public boolean tryStartRoll(PlayerEntity player) {
-        if (!isActiveUser(player) || rolling) {
-            return false;
-        }
-
-        rolling = true;
-        markDirty();
-        return true;
-    }
-
-    public void finishRoll() {
-        rolling = false;
+        clearPendingRoll();
         markDirty();
     }
 
     public boolean isRolling() {
         return rolling;
+    }
+
+    public static void tick(World world, BlockPos pos, BlockState state, SlotMachineBlockEntity blockEntity) {
+        if (world.isClient() || !blockEntity.rolling) {
+            return;
+        }
+
+        blockEntity.rollTicksRemaining--;
+        if (blockEntity.rollTicksRemaining <= 0) {
+            blockEntity.resolveRoll();
+        }
     }
 
     @Override
@@ -207,41 +225,80 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         return propertyDelegate;
     }
 
-    @Nullable
-    public SlotMachineOutcome spin(PlayerEntity player) {
+    public boolean spin(PlayerEntity player) {
         if (world == null || world.isClient() || !isActiveUser(player) || rolling) {
-            return null;
+            return false;
         }
 
         ItemStack betStack = getStack(INPUT_SLOT);
         if (!SlotMachineBet.isValidBet(betStack)) {
-            return null;
+            return false;
         }
 
-        if (!tryStartRoll(player)) {
-            return null;
+        pendingBetItem = betStack.getItem();
+        pendingBetAmount = betStack.getCount();
+        rollingPlayerUuid = player.getUuid();
+        rollTicksRemaining = getRollDelayTicks();
+        rolling = true;
+        lastOutcomeId = SlotMachineOutcome.NO_OUTCOME_ID;
+        removeStack(INPUT_SLOT);
+        markDirty();
+        return true;
+    }
+
+    private int getRollDelayTicks() {
+        if (world == null) {
+            return MIN_ROLL_DELAY_TICKS;
+        }
+        return MIN_ROLL_DELAY_TICKS + world.getRandom().nextInt(MAX_ROLL_DELAY_TICKS - MIN_ROLL_DELAY_TICKS + 1);
+    }
+
+    private void resolveRoll() {
+        if (world == null || world.isClient()) {
+            return;
         }
 
-        try {
-            Item betItem = betStack.getItem();
-            int betAmount = betStack.getCount();
-            removeStack(INPUT_SLOT);
+        if (pendingBetItem == null || pendingBetAmount <= 0) {
+            clearPendingRoll();
+            markDirty();
+            return;
+        }
 
-            SlotMachineOutcome outcome = SlotMachineOutcome.roll(world.getRandom());
-            lastOutcomeId = outcome.getId();
-            if (!player.isRemoved()) {
-                int payoutCount = outcome.calculatePayout(betAmount);
-                giveOrDropPayout(player, SlotMachineBet.createPayoutStack(betItem, payoutCount));
-                sendOutcomeMessage(player, outcome, payoutCount, betItem);
-                playOutcomeSound(outcome);
-                if (outcome == SlotMachineOutcome.JACKPOT && SlotMachineConfig.get().isJackpotFireworksEnabled()) {
-                    launchJackpotFirework();
-                }
+        Item betItem = pendingBetItem;
+        int betAmount = pendingBetAmount;
+        SlotMachineOutcome outcome = SlotMachineOutcome.roll(world.getRandom());
+        lastOutcomeId = outcome.getId();
+
+        ServerPlayerEntity player = getRollingPlayer();
+        if (player != null && !player.isRemoved()) {
+            int payoutCount = outcome.calculatePayout(betAmount);
+            giveOrDropPayout(player, SlotMachineBet.createPayoutStack(betItem, payoutCount));
+            sendOutcomeMessage(player, outcome, payoutCount, betItem);
+            playOutcomeSound(outcome);
+            if (outcome == SlotMachineOutcome.JACKPOT && SlotMachineConfig.get().isJackpotFireworksEnabled()) {
+                launchJackpotFirework();
             }
-            return outcome;
-        } finally {
-            finishRoll();
         }
+
+        clearPendingRoll();
+        markDirty();
+    }
+
+    @Nullable
+    private ServerPlayerEntity getRollingPlayer() {
+        if (rollingPlayerUuid == null || !(world instanceof ServerWorld serverWorld)) {
+            return null;
+        }
+        return serverWorld.getServer().getPlayerManager().getPlayer(rollingPlayerUuid);
+    }
+
+    private void clearPendingRoll() {
+        rolling = false;
+        rollTicksRemaining = 0;
+        rollingPlayerUuid = null;
+        pendingBetItem = null;
+        pendingBetAmount = 0;
+        activeUser = null;
     }
 
     private void giveOrDropPayout(PlayerEntity player, ItemStack payoutStack) {
@@ -319,6 +376,15 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         super.writeNbt(nbt, registryLookup);
         Inventories.writeNbt(nbt, inventory, registryLookup);
         nbt.putInt(LAST_OUTCOME_KEY, lastOutcomeId);
+        nbt.putBoolean(ROLLING_KEY, rolling);
+        nbt.putInt(ROLL_TICKS_REMAINING_KEY, rollTicksRemaining);
+        nbt.putInt(PENDING_BET_AMOUNT_KEY, pendingBetAmount);
+        if (rollingPlayerUuid != null) {
+            nbt.putUuid(ROLLING_PLAYER_KEY, rollingPlayerUuid);
+        }
+        if (pendingBetItem != null) {
+            nbt.putString(PENDING_BET_ITEM_KEY, Registries.ITEM.getId(pendingBetItem).toString());
+        }
     }
 
     @Override
@@ -326,6 +392,30 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         super.readNbt(nbt, registryLookup);
         Inventories.readNbt(nbt, inventory, registryLookup);
         lastOutcomeId = nbt.contains(LAST_OUTCOME_KEY) ? nbt.getInt(LAST_OUTCOME_KEY) : SlotMachineOutcome.NO_OUTCOME_ID;
+        rolling = nbt.getBoolean(ROLLING_KEY);
+        rollTicksRemaining = nbt.contains(ROLL_TICKS_REMAINING_KEY)
+                ? Math.max(1, nbt.getInt(ROLL_TICKS_REMAINING_KEY))
+                : 0;
+        pendingBetAmount = nbt.getInt(PENDING_BET_AMOUNT_KEY);
+        rollingPlayerUuid = nbt.containsUuid(ROLLING_PLAYER_KEY) ? nbt.getUuid(ROLLING_PLAYER_KEY) : null;
+        pendingBetItem = readPendingBetItem(nbt);
+
+        if (rolling && (pendingBetItem == null || pendingBetAmount <= 0 || rollingPlayerUuid == null)) {
+            clearPendingRoll();
+        }
+    }
+
+    @Nullable
+    private Item readPendingBetItem(NbtCompound nbt) {
+        if (!nbt.contains(PENDING_BET_ITEM_KEY)) {
+            return null;
+        }
+
+        Identifier itemId = Identifier.tryParse(nbt.getString(PENDING_BET_ITEM_KEY));
+        if (itemId == null || !Registries.ITEM.containsId(itemId)) {
+            return null;
+        }
+        return Registries.ITEM.get(itemId);
     }
 
     @Override
