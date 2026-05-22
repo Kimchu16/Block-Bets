@@ -1,18 +1,33 @@
 {
   "variants": {
-    "facing=east": {
-      "model": "blockbets:block/slot_machine_block",
+    "facing=east,half=lower": {
+      "model": "blockbets:block/slot_machine_lower",
       "y": 270
     },
-    "facing=north": {
-      "model": "blockbets:block/slot_machine_block",
+    "facing=east,half=upper": {
+      "model": "blockbets:block/slot_machine_upper",
+      "y": 270
+    },
+    "facing=north,half=lower": {
+      "model": "blockbets:block/slot_machine_lower",
       "y": 180
     },
-    "facing=south": {
-      "model": "blockbets:block/slot_machine_block"
+    "facing=north,half=upper": {
+      "model": "blockbets:block/slot_machine_upper",
+      "y": 180
     },
-    "facing=west": {
-      "model": "blockbets:block/slot_machine_block",
+    "facing=south,half=lower": {
+      "model": "blockbets:block/slot_machine_lower"
+    },
+    "facing=south,half=upper": {
+      "model": "blockbets:block/slot_machine_upper"
+    },
+    "facing=west,half=lower": {
+      "model": "blockbets:block/slot_machine_lower",
+      "y": 90
+    },
+    "facing=west,half=upper": {
+      "model": "blockbets:block/slot_machine_upper",
       "y": 90
     }
   }

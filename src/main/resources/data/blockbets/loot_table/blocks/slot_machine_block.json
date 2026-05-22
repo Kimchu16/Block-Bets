@@ -6,6 +6,15 @@
       "entries": [
         {
           "type": "minecraft:item",
+          "conditions": [
+            {
+              "condition": "minecraft:block_state_property",
+              "block": "blockbets:slot_machine_block",
+              "properties": {
+                "half": "lower"
+              }
+            }
+          ],
           "name": "blockbets:slot_machine_block"
         }
       ],
