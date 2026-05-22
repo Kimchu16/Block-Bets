@@ -4,14 +4,11 @@ import com.kimchu16.blockbets.block.entity.custom.SlotMachineBlockEntity;
 import com.mojang.serialization.MapCodec;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.DispenserBlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.screen.slot.Slot;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.DirectionProperty;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.ItemActionResult;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -65,7 +62,15 @@ public class SlotMachineBlock extends BlockWithEntity {
 
     @Override
     protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
-        ItemScatterer.onStateReplaced(state, newState, world, pos);
+        if (!state.isOf(newState.getBlock())) {
+            BlockEntity blockEntity = world.getBlockEntity(pos);
+            if (blockEntity instanceof SlotMachineBlockEntity slotMachineBlockEntity) {
+                slotMachineBlockEntity.clearActiveUser();
+                // Closing with an unspun bet keeps it in the block inventory; breaking drops it safely here.
+                ItemScatterer.spawn(world, pos, slotMachineBlockEntity);
+                world.updateComparators(pos, this);
+            }
+        }
         super.onStateReplaced(state, world, pos, newState, moved);
     }
 
@@ -74,7 +79,9 @@ public class SlotMachineBlock extends BlockWithEntity {
         BlockEntity blockEntity = world.getBlockEntity(pos);
         if (blockEntity instanceof SlotMachineBlockEntity slotMachineBlockEntity) {
             if (!world.isClient()){
-                player.openHandledScreen(slotMachineBlockEntity);
+                if (slotMachineBlockEntity.tryUse(player)) {
+                    player.openHandledScreen(slotMachineBlockEntity);
+                }
             }
         }
 

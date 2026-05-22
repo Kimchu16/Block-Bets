@@ -1,5 +1,6 @@
 package com.kimchu16.blockbets.screen.custom;
 
+import com.kimchu16.blockbets.block.entity.custom.SlotMachineBlockEntity;
 import com.kimchu16.blockbets.screen.ModScreenHandlers;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -10,10 +11,10 @@ import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.math.BlockPos;
-import org.jetbrains.annotations.Nullable;
 
 public class SlotMachineScreenHandler extends ScreenHandler {
     private final Inventory inventory;
+    private final SlotMachineBlockEntity blockEntity;
 
     public SlotMachineScreenHandler(int syncId, PlayerInventory playerInventory, BlockPos pos) {
         this(syncId, playerInventory, playerInventory.player.getWorld().getBlockEntity(pos));
@@ -21,9 +22,14 @@ public class SlotMachineScreenHandler extends ScreenHandler {
 
     public SlotMachineScreenHandler(int syncId, PlayerInventory playerInventory, BlockEntity blockEntity) {
         super(ModScreenHandlers.SLOT_MACHINE_SCREEN_HANDLER, syncId);
-        this.inventory = ((Inventory) blockEntity);
+        if (!(blockEntity instanceof SlotMachineBlockEntity slotMachineBlockEntity)) {
+            throw new IllegalStateException("Slot machine screen opened without a slot machine block entity");
+        }
 
-        this.addSlot(new Slot(inventory, 0, 26, 34));
+        this.inventory = slotMachineBlockEntity;
+        this.blockEntity = slotMachineBlockEntity;
+
+        this.addSlot(new Slot(inventory, SlotMachineBlockEntity.INPUT_SLOT, 26, 34));
 
         addPlayerInventory(playerInventory);
         addPlayerHotbar(playerInventory);
@@ -56,6 +62,13 @@ public class SlotMachineScreenHandler extends ScreenHandler {
     @Override
     public boolean canUse(PlayerEntity player) {
         return this.inventory.canPlayerUse(player);
+    }
+
+    @Override
+    public void onClosed(PlayerEntity player) {
+        super.onClosed(player);
+        // Unspun bets intentionally remain stored in the block inventory and are dropped if the block is broken.
+        this.blockEntity.releaseUser(player);
     }
 
     private void addPlayerInventory(PlayerInventory playerInventory) {
