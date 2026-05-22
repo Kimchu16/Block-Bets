@@ -2,6 +2,7 @@ package com.kimchu16.blockbets.screen.custom;
 
 import com.kimchu16.blockbets.block.entity.custom.SlotMachineBlockEntity;
 import com.kimchu16.blockbets.screen.ModScreenHandlers;
+import com.kimchu16.blockbets.slotmachine.SlotMachineBet;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
@@ -31,7 +32,7 @@ public class SlotMachineScreenHandler extends ScreenHandler {
         this.inventory = slotMachineBlockEntity;
         this.blockEntity = slotMachineBlockEntity;
 
-        this.addSlot(new Slot(inventory, SlotMachineBlockEntity.INPUT_SLOT, 26, 34));
+        this.addSlot(new BetInputSlot(inventory, SlotMachineBlockEntity.INPUT_SLOT, 26, 34));
 
         addPlayerInventory(playerInventory);
         addPlayerHotbar(playerInventory);
@@ -69,7 +70,7 @@ public class SlotMachineScreenHandler extends ScreenHandler {
     @Override
     public boolean onButtonClick(PlayerEntity player, int id) {
         if (id == SPIN_BUTTON_ID) {
-            return this.blockEntity.isActiveUser(player) && !this.blockEntity.isRolling();
+            return !player.getWorld().isClient() && this.blockEntity.tryConsumeBet(player);
         }
 
         return false;
@@ -96,4 +97,24 @@ public class SlotMachineScreenHandler extends ScreenHandler {
         }
     }
 
+    private static class BetInputSlot extends Slot {
+        public BetInputSlot(Inventory inventory, int index, int x, int y) {
+            super(inventory, index, x, y);
+        }
+
+        @Override
+        public boolean canInsert(ItemStack stack) {
+            return SlotMachineBet.isExactBet(stack);
+        }
+
+        @Override
+        public int getMaxItemCount() {
+            return SlotMachineBet.getBetAmount();
+        }
+
+        @Override
+        public int getMaxItemCount(ItemStack stack) {
+            return SlotMachineBet.getBetAmount();
+        }
+    }
 }

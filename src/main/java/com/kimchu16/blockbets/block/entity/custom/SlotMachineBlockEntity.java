@@ -3,6 +3,7 @@ package com.kimchu16.blockbets.block.entity.custom;
 import com.kimchu16.blockbets.block.entity.ImplementedInventory;
 import com.kimchu16.blockbets.block.entity.ModBlockEntities;
 import com.kimchu16.blockbets.screen.custom.SlotMachineScreenHandler;
+import com.kimchu16.blockbets.slotmachine.SlotMachineBet;
 import net.fabricmc.fabric.api.screenhandler.v1.ExtendedScreenHandlerFactory;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -92,6 +93,20 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
 
     public boolean isRolling() {
         return rolling;
+    }
+
+    public boolean tryConsumeBet(PlayerEntity player) {
+        if (!isActiveUser(player) || rolling) {
+            return false;
+        }
+
+        ItemStack betStack = getStack(INPUT_SLOT);
+        if (!SlotMachineBet.isExactBet(betStack)) {
+            return false;
+        }
+
+        removeStack(INPUT_SLOT, SlotMachineBet.getBetAmount());
+        return true;
     }
 
     @Override
