@@ -92,6 +92,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
     private int lastOutcomeId = SlotMachineOutcome.NO_OUTCOME_ID;
     @Nullable
     private UUID rollingPlayerUuid;
+    private boolean releaseActiveUserAfterRoll;
     @Nullable
     private Item pendingBetItem;
     private int pendingBetAmount;
@@ -136,14 +137,21 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
     }
 
     public void releaseUser(PlayerEntity player) {
-        if (!rolling && isActiveUser(player)) {
-            activeUser = null;
-            markDirty();
+        if (!isActiveUser(player)) {
+            return;
         }
+
+        if (rolling) {
+            releaseActiveUserAfterRoll = true;
+        } else {
+            activeUser = null;
+        }
+        markDirty();
     }
 
     public void clearActiveUser() {
         activeUser = null;
+        releaseActiveUserAfterRoll = false;
         clearPendingRoll();
         markDirty();
     }
@@ -241,6 +249,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         pendingBetItem = betStack.getItem();
         pendingBetAmount = betStack.getCount();
         rollingPlayerUuid = player.getUuid();
+        releaseActiveUserAfterRoll = false;
         rollTicksRemaining = getRollDelayTicks();
         rolling = true;
         lastOutcomeId = SlotMachineOutcome.NO_OUTCOME_ID;
@@ -263,7 +272,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         }
 
         if (pendingBetItem == null || pendingBetAmount <= 0) {
-            clearPendingRoll();
+            finishRoll(true);
             markDirty();
             return;
         }
@@ -274,7 +283,8 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         lastOutcomeId = outcome.getId();
 
         ServerPlayerEntity player = getRollingPlayer();
-        if (player != null && !player.isRemoved()) {
+        boolean playerPresent = player != null && !player.isRemoved();
+        if (playerPresent) {
             int payoutCount = outcome.calculatePayout(betAmount);
             giveOrDropPayout(player, SlotMachineBet.createPayoutStack(betItem, payoutCount));
             sendOutcomeMessage(player, outcome, payoutCount, betItem);
@@ -284,7 +294,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
             }
         }
 
-        clearPendingRoll();
+        finishRoll(releaseActiveUserAfterRoll || !playerPresent);
         markDirty();
     }
 
@@ -296,13 +306,20 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         return serverWorld.getServer().getPlayerManager().getPlayer(rollingPlayerUuid);
     }
 
+    private void finishRoll(boolean releaseActiveUser) {
+        clearPendingRoll();
+        if (releaseActiveUser) {
+            activeUser = null;
+        }
+    }
+
     private void clearPendingRoll() {
         rolling = false;
         rollTicksRemaining = 0;
         rollingPlayerUuid = null;
+        releaseActiveUserAfterRoll = false;
         pendingBetItem = null;
         pendingBetAmount = 0;
-        activeUser = null;
     }
 
     private void giveOrDropPayout(PlayerEntity player, ItemStack payoutStack) {
