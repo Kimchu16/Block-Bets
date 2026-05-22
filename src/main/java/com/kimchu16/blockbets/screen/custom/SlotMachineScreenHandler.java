@@ -12,7 +12,6 @@ import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 public class SlotMachineScreenHandler extends ScreenHandler {
@@ -86,15 +85,7 @@ public class SlotMachineScreenHandler extends ScreenHandler {
                 return false;
             }
 
-            boolean spun = this.blockEntity.spin(player) != null;
-            if (!spun) {
-                player.sendMessage(Text.translatable(
-                        "message.blockbets.slot_machine.invalid_bet",
-                        SlotMachineBet.getMinimumBetAmount(),
-                        SlotMachineBet.getAcceptedBetItemsText()
-                ), true);
-            }
-            return spun;
+            return this.blockEntity.spin(player) != null;
         }
 
         return false;
@@ -113,8 +104,8 @@ public class SlotMachineScreenHandler extends ScreenHandler {
                 this.addSlot(new Slot(
                         playerInventory,
                         l + i * 9 + 9,
-                        SlotMachineGuiLayout.INVENTORY_X + l * 18,
-                        SlotMachineGuiLayout.INVENTORY_Y + i * 18
+                        SlotMachineGuiLayout.INVENTORY_X + l * SlotMachineGuiLayout.SLOT_SPACING,
+                        SlotMachineGuiLayout.INVENTORY_Y + i * SlotMachineGuiLayout.SLOT_SPACING
                 ));
             }
         }
@@ -125,7 +116,7 @@ public class SlotMachineScreenHandler extends ScreenHandler {
             this.addSlot(new Slot(
                     playerInventory,
                     i,
-                    SlotMachineGuiLayout.INVENTORY_X + i * 18,
+                    SlotMachineGuiLayout.INVENTORY_X + i * SlotMachineGuiLayout.SLOT_SPACING,
                     SlotMachineGuiLayout.HOTBAR_Y
             ));
         }

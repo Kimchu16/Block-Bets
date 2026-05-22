@@ -19,21 +19,31 @@ import java.util.List;
 
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.CLOSE_BUTTON_X;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.CLOSE_BUTTON_Y;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.BET_PANEL_HEIGHT;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.BET_PANEL_WIDTH;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.BET_PANEL_X;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.BET_PANEL_Y;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.GUI_HEIGHT;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.GUI_WIDTH;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.HEADER_Y;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.HOTBAR_Y;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.INPUT_SLOT_X;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.INPUT_SLOT_Y;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.INVENTORY_LABEL_Y;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.INVENTORY_X;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.INVENTORY_Y;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.MAIN_PANEL_HEIGHT;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.MAIN_PANEL_Y;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.PADDING;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.RESULT_LABEL_Y;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.RESULT_PANEL_HEIGHT;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.RESULT_PANEL_WIDTH;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.RESULT_PANEL_X;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.RESULT_PANEL_Y;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.SPIN_BUTTON_X;
 import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.SPIN_BUTTON_Y;
-import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.TITLE_Y;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.SLOT_SPACING;
+import static com.kimchu16.blockbets.screen.custom.SlotMachineGuiLayout.SUBTITLE_Y;
 
 public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     private static final int COLOR_OUTER_FRAME = 0xFF7A4A12;
@@ -52,7 +62,6 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     private static final int BUTTON_WIDTH = 64;
     private static final int CLOSE_BUTTON_WIDTH = 38;
     private static final int BUTTON_HEIGHT = 18;
-    private static final int SLOT_SIZE = 18;
     private static final int PLAYER_SLOT_ROWS = 3;
     private static final int PLAYER_SLOT_COLUMNS = 9;
 
@@ -64,7 +73,7 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
         this.backgroundWidth = GUI_WIDTH;
         this.backgroundHeight = GUI_HEIGHT;
         this.playerInventoryTitleX = INVENTORY_X;
-        this.playerInventoryTitleY = INVENTORY_Y - 11;
+        this.playerInventoryTitleY = INVENTORY_LABEL_Y;
     }
 
     @Override
@@ -109,23 +118,24 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
 
     @Override
     protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
-        context.drawCenteredTextWithShadow(this.textRenderer, this.title, GUI_WIDTH / 2, TITLE_Y, COLOR_GOLD_LIGHT);
+        context.drawCenteredTextWithShadow(this.textRenderer, this.title, GUI_WIDTH / 2, HEADER_Y, COLOR_GOLD_LIGHT);
         context.drawCenteredTextWithShadow(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.subtitle"),
-                GUI_WIDTH / 2, TITLE_Y + 11, COLOR_MUTED_TEXT);
+                GUI_WIDTH / 2, SUBTITLE_Y, COLOR_MUTED_TEXT);
 
-        context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.bet_input"), INPUT_SLOT_X - 2, 38, COLOR_TEXT, false);
+        context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.bet_input"),
+                BET_PANEL_X + 12, BET_PANEL_Y + 6, COLOR_TEXT, false);
         context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.minimum_bet",
-                SlotMachineBet.getMinimumBetAmount()), PADDING + 12, 72, COLOR_MUTED_TEXT, false);
+                SlotMachineBet.getMinimumBetAmount()), BET_PANEL_X + 10, BET_PANEL_Y + 44, COLOR_MUTED_TEXT, false);
 
-        context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.output"), RESULT_PANEL_X, 30, COLOR_TEXT, false);
+        context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.output"), RESULT_PANEL_X, RESULT_LABEL_Y, COLOR_TEXT, false);
         Text resultText = getResultText();
         int resultColor = invalidBetShown ? COLOR_ERROR_TEXT : COLOR_GOLD_LIGHT;
         context.drawCenteredTextWithShadow(this.textRenderer, resultText,
-                RESULT_PANEL_X + RESULT_PANEL_WIDTH / 2, RESULT_PANEL_Y + 8, resultColor);
+                RESULT_PANEL_X + RESULT_PANEL_WIDTH / 2, RESULT_PANEL_Y + 12, resultColor);
         context.drawCenteredTextWithShadow(this.textRenderer, getPayoutText(),
-                RESULT_PANEL_X + RESULT_PANEL_WIDTH / 2, RESULT_PANEL_Y + 22, COLOR_MUTED_TEXT);
+                RESULT_PANEL_X + RESULT_PANEL_WIDTH / 2, RESULT_PANEL_Y + 28, COLOR_MUTED_TEXT);
 
-        context.drawText(this.textRenderer, this.playerInventoryTitle, INVENTORY_X, INVENTORY_Y - 11, COLOR_MUTED_TEXT, false);
+        context.drawText(this.textRenderer, this.playerInventoryTitle, INVENTORY_X, INVENTORY_LABEL_Y, COLOR_MUTED_TEXT, false);
     }
 
     @Override
@@ -143,8 +153,8 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     }
 
     private void drawMachinePanel(DrawContext context) {
-        drawPanel(context, PADDING, 27, GUI_WIDTH - PADDING * 2, 70, COLOR_PANEL_RED, COLOR_GOLD_TRIM);
-        drawPanel(context, PADDING + 9, 37, 50, 48, COLOR_PANEL_RED_DARK, COLOR_GOLD_TRIM);
+        drawPanel(context, PADDING, MAIN_PANEL_Y, GUI_WIDTH - PADDING * 2, MAIN_PANEL_HEIGHT, COLOR_PANEL_RED, COLOR_GOLD_TRIM);
+        drawPanel(context, BET_PANEL_X, BET_PANEL_Y, BET_PANEL_WIDTH, BET_PANEL_HEIGHT, COLOR_PANEL_RED_DARK, COLOR_GOLD_TRIM);
         drawMachineSlot(context, INPUT_SLOT_X, INPUT_SLOT_Y);
 
         drawPanel(context, RESULT_PANEL_X - 4, RESULT_PANEL_Y - 4,
@@ -154,15 +164,17 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     }
 
     private void drawInventoryPanel(DrawContext context) {
-        drawPanel(context, PADDING, 99, GUI_WIDTH - PADDING * 2, 84, 0xFF211C19, 0xFF4A3A27);
+        int inventoryPanelY = INVENTORY_LABEL_Y - 9;
+        int inventoryPanelHeight = GUI_HEIGHT - inventoryPanelY - PADDING;
+        drawPanel(context, PADDING, inventoryPanelY, GUI_WIDTH - PADDING * 2, inventoryPanelHeight, 0xFF211C19, 0xFF4A3A27);
         for (int row = 0; row < PLAYER_SLOT_ROWS; row++) {
             for (int column = 0; column < PLAYER_SLOT_COLUMNS; column++) {
-                drawPlayerSlot(context, INVENTORY_X + column * SLOT_SIZE, INVENTORY_Y + row * SLOT_SIZE);
+                drawPlayerSlot(context, INVENTORY_X + column * SLOT_SPACING, INVENTORY_Y + row * SLOT_SPACING);
             }
         }
 
         for (int column = 0; column < PLAYER_SLOT_COLUMNS; column++) {
-            drawPlayerSlot(context, INVENTORY_X + column * SLOT_SIZE, HOTBAR_Y);
+            drawPlayerSlot(context, INVENTORY_X + column * SLOT_SPACING, HOTBAR_Y);
         }
     }
 

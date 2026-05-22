@@ -22,7 +22,6 @@
 
   "itemgroup.blockbets.block_bets_items": "Block Bets",
 
-  "message.blockbets.slot_machine.invalid_bet": "Insert at least %s clean items: %s.",
   "message.blockbets.slot_machine.outcome": "%s: paid %s %s.",
 
   "tooltip.blockbets.slot_machine.description": "A server-rolled casino machine for clean item bets.",
