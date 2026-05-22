@@ -2,6 +2,7 @@
   "block.blockbets.slot_machine_block": "Slot Machine",
 
   "gui.blockbets.slot_machine.bet_input": "Bet",
+  "gui.blockbets.slot_machine.busy": "This slot machine is already in use.",
   "gui.blockbets.slot_machine.close": "Close",
   "gui.blockbets.slot_machine.output": "Output",
   "gui.blockbets.slot_machine.output_placeholder": "Waiting",

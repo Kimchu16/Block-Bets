@@ -36,7 +36,7 @@ public class SlotMachineScreenHandler extends ScreenHandler {
         this.propertyDelegate = slotMachineBlockEntity.getPropertyDelegate();
         addProperties(this.propertyDelegate);
 
-        this.addSlot(new BetInputSlot(inventory, SlotMachineBlockEntity.INPUT_SLOT, 26, 34));
+        this.addSlot(new BetInputSlot(inventory, slotMachineBlockEntity, SlotMachineBlockEntity.INPUT_SLOT, 26, 34));
 
         addPlayerInventory(playerInventory);
         addPlayerHotbar(playerInventory);
@@ -106,13 +106,21 @@ public class SlotMachineScreenHandler extends ScreenHandler {
     }
 
     private static class BetInputSlot extends Slot {
-        public BetInputSlot(Inventory inventory, int index, int x, int y) {
+        private final SlotMachineBlockEntity blockEntity;
+
+        public BetInputSlot(Inventory inventory, SlotMachineBlockEntity blockEntity, int index, int x, int y) {
             super(inventory, index, x, y);
+            this.blockEntity = blockEntity;
         }
 
         @Override
         public boolean canInsert(ItemStack stack) {
-            return SlotMachineBet.isExactBet(stack);
+            return !blockEntity.isRolling() && SlotMachineBet.isExactBet(stack);
+        }
+
+        @Override
+        public boolean canTakeItems(PlayerEntity playerEntity) {
+            return !blockEntity.isRolling() && super.canTakeItems(playerEntity);
         }
 
         @Override

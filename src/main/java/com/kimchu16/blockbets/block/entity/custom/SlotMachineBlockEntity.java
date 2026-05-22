@@ -21,10 +21,12 @@ import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.PropertyDelegate;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.UUID;
@@ -32,6 +34,7 @@ import java.util.UUID;
 public class SlotMachineBlockEntity extends BlockEntity implements ImplementedInventory, ExtendedScreenHandlerFactory<BlockPos> {
     public static final int INPUT_SLOT = 0;
     public static final int INVENTORY_SIZE = 1;
+    private static final int[] NO_AUTOMATION_SLOTS = new int[0];
     private static final String LAST_OUTCOME_KEY = "LastOutcome";
 
     private final DefaultedList<ItemStack> inventory = DefaultedList.ofSize(INVENTORY_SIZE, ItemStack.EMPTY);
@@ -68,6 +71,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
     }
 
     public boolean tryUse(PlayerEntity player) {
+        clearStaleActiveUser();
         if (rolling) {
             return false;
         }
@@ -80,6 +84,16 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
         }
 
         return false;
+    }
+
+    private void clearStaleActiveUser() {
+        if (activeUser != null
+                && world instanceof ServerWorld serverWorld
+                && serverWorld.getServer().getPlayerManager().getPlayer(activeUser) == null) {
+            activeUser = null;
+            rolling = false;
+            markDirty();
+        }
     }
 
     public boolean isActiveUser(PlayerEntity player) {
@@ -116,6 +130,21 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
 
     public boolean isRolling() {
         return rolling;
+    }
+
+    @Override
+    public int[] getAvailableSlots(Direction side) {
+        return NO_AUTOMATION_SLOTS;
+    }
+
+    @Override
+    public boolean canInsert(int slot, ItemStack stack, @Nullable Direction side) {
+        return false;
+    }
+
+    @Override
+    public boolean canExtract(int slot, ItemStack stack, Direction side) {
+        return false;
     }
 
     @Override
@@ -177,16 +206,19 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
             return null;
         }
 
-        rolling = true;
-        markDirty();
+        if (!tryStartRoll(player)) {
+            return null;
+        }
 
         try {
             removeStack(INPUT_SLOT, SlotMachineBet.getBetAmount());
 
             SlotMachineOutcome outcome = SlotMachineOutcome.roll(world.getRandom());
             lastOutcomeId = outcome.getId();
-            int payoutCount = outcome.calculatePayout(SlotMachineBet.getBetAmount());
-            giveOrDropPayout(player, SlotMachineBet.createPayoutStack(payoutCount));
+            if (!player.isRemoved()) {
+                int payoutCount = outcome.calculatePayout(SlotMachineBet.getBetAmount());
+                giveOrDropPayout(player, SlotMachineBet.createPayoutStack(payoutCount));
+            }
             return outcome;
         } finally {
             finishRoll();
@@ -198,9 +230,7 @@ public class SlotMachineBlockEntity extends BlockEntity implements ImplementedIn
             return;
         }
 
-        if (!player.isRemoved()) {
-            player.getInventory().insertStack(payoutStack);
-        }
+        player.getInventory().insertStack(payoutStack);
 
         if (!payoutStack.isEmpty() && world != null) {
             ItemScatterer.spawn(world, pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5, payoutStack);

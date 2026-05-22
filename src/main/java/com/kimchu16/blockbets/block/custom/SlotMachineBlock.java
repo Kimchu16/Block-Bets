@@ -8,6 +8,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.DirectionProperty;
+import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.ItemScatterer;
 import net.minecraft.util.hit.BlockHitResult;
@@ -81,6 +82,8 @@ public class SlotMachineBlock extends BlockWithEntity {
             if (!world.isClient()){
                 if (slotMachineBlockEntity.tryUse(player)) {
                     player.openHandledScreen(slotMachineBlockEntity);
+                } else {
+                    player.sendMessage(Text.translatable("gui.blockbets.slot_machine.busy"), true);
                 }
             }
         }
