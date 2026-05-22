@@ -13,6 +13,8 @@ import net.minecraft.screen.slot.Slot;
 import net.minecraft.util.math.BlockPos;
 
 public class SlotMachineScreenHandler extends ScreenHandler {
+    public static final int SPIN_BUTTON_ID = 0;
+
     private final Inventory inventory;
     private final SlotMachineBlockEntity blockEntity;
 
@@ -62,6 +64,15 @@ public class SlotMachineScreenHandler extends ScreenHandler {
     @Override
     public boolean canUse(PlayerEntity player) {
         return this.inventory.canPlayerUse(player);
+    }
+
+    @Override
+    public boolean onButtonClick(PlayerEntity player, int id) {
+        if (id == SPIN_BUTTON_ID) {
+            return this.blockEntity.isActiveUser(player) && !this.blockEntity.isRolling();
+        }
+
+        return false;
     }
 
     @Override

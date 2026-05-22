@@ -6,9 +6,7 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.render.GameRenderer;
-import net.minecraft.client.toast.SystemToast;
 import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.screen.ScreenHandler;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
@@ -24,17 +22,32 @@ public class SlotMachineScreen extends HandledScreen<SlotMachineScreenHandler> {
     protected void init() {
         super.init(); // Need this to offset inventory slots instead of defaulting to top left of screen (this.x, this.y)
 
-        int buttonWidth = 18;
-        int x = this.x + (backgroundWidth / 2) - (buttonWidth / 2) - 10;
-        int y = this.y + 50;
+        ButtonWidget spinButton = ButtonWidget.builder(Text.translatable("gui.blockbets.slot_machine.spin"), (btn) -> {
+            if (this.client != null && this.client.interactionManager != null) {
+                this.client.interactionManager.clickButton(this.handler.syncId, SlotMachineScreenHandler.SPIN_BUTTON_ID);
+            }
+        }).dimensions(this.x + 86, this.y + 50, 46, 20).build();
 
-        ButtonWidget rollButton = ButtonWidget.builder(Text.of("Roll"), (btn) -> {
-            this.client.getToastManager().add(
-                    SystemToast.create(this.client, SystemToast.Type.NARRATOR_TOGGLE, Text.of("Test"), Text.of("Button works!"))
-            );
-        }).dimensions(x,y, 40, 20).build();
+        ButtonWidget closeButton = ButtonWidget.builder(Text.translatable("gui.blockbets.slot_machine.close"), (btn) -> this.close())
+                .dimensions(this.x + 134, this.y + 50, 34, 20)
+                .build();
 
-        this.addDrawableChild(rollButton);
+        this.addDrawableChild(spinButton);
+        this.addDrawableChild(closeButton);
+    }
+
+    @Override
+    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        super.render(context, mouseX, mouseY, delta);
+        drawMouseoverTooltip(context, mouseX, mouseY);
+    }
+
+    @Override
+    protected void drawForeground(DrawContext context, int mouseX, int mouseY) {
+        context.drawText(this.textRenderer, this.title, 8, 6, 0x404040, false);
+        context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.bet_input"), 24, 22, 0x404040, false);
+        context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.output"), 86, 22, 0x404040, false);
+        context.drawText(this.textRenderer, Text.translatable("gui.blockbets.slot_machine.output_placeholder"), 86, 34, 0x606060, false);
     }
 
     @Override
