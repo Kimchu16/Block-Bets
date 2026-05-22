@@ -16,6 +16,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 
 public class SlotMachineScreenHandler extends ScreenHandler {
+    public static final int BET_SLOT_ID = 0;
     public static final int SPIN_BUTTON_ID = 0;
 
     private final Inventory inventory;
@@ -37,7 +38,13 @@ public class SlotMachineScreenHandler extends ScreenHandler {
         this.propertyDelegate = slotMachineBlockEntity.getPropertyDelegate();
         addProperties(this.propertyDelegate);
 
-        this.addSlot(new BetInputSlot(inventory, slotMachineBlockEntity, SlotMachineBlockEntity.INPUT_SLOT, 26, 34));
+        this.addSlot(new BetInputSlot(
+                inventory,
+                slotMachineBlockEntity,
+                SlotMachineBlockEntity.INPUT_SLOT,
+                SlotMachineGuiLayout.INPUT_SLOT_X,
+                SlotMachineGuiLayout.INPUT_SLOT_Y
+        ));
 
         addPlayerInventory(playerInventory);
         addPlayerHotbar(playerInventory);
@@ -103,14 +110,24 @@ public class SlotMachineScreenHandler extends ScreenHandler {
     private void addPlayerInventory(PlayerInventory playerInventory) {
         for (int i = 0; i < 3; ++i) {
             for (int l = 0; l <9; ++l) {
-                this.addSlot(new Slot(playerInventory, l + i * 9 + 9, 8 + l * 18, 84 + i * 18));
+                this.addSlot(new Slot(
+                        playerInventory,
+                        l + i * 9 + 9,
+                        SlotMachineGuiLayout.INVENTORY_X + l * 18,
+                        SlotMachineGuiLayout.INVENTORY_Y + i * 18
+                ));
             }
         }
     }
 
     private void addPlayerHotbar(PlayerInventory playerInventory) {
         for (int i = 0; i < 9; ++i) {
-            this.addSlot(new Slot(playerInventory, i, 8 + i * 18, 142));
+            this.addSlot(new Slot(
+                    playerInventory,
+                    i,
+                    SlotMachineGuiLayout.INVENTORY_X + i * 18,
+                    SlotMachineGuiLayout.HOTBAR_Y
+            ));
         }
     }
 
