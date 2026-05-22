@@ -128,6 +128,16 @@ public class SlotMachineBlock extends BlockWithEntity {
     }
 
     @Override
+    public void afterBreak(World world, PlayerEntity player, BlockPos pos, BlockState state,
+                           @Nullable BlockEntity blockEntity, ItemStack tool) {
+        if (player.isCreative() && state.get(HALF) == DoubleBlockHalf.LOWER) {
+            return;
+        }
+
+        super.afterBreak(world, player, pos, state, blockEntity, tool);
+    }
+
+    @Override
     protected void onStateReplaced(BlockState state, World world, BlockPos pos, BlockState newState, boolean moved) {
         if (!state.isOf(newState.getBlock())) {
             BlockEntity blockEntity = world.getBlockEntity(pos);
